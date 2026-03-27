@@ -1,0 +1,567 @@
+import React, { useState } from 'react';
+import { 
+  BookOpen, Search, UploadCloud, Edit3, 
+  ChevronRight, ChevronLeft, CheckCircle, 
+  Info, LayoutDashboard, ArrowRight, Shield, Bell, Globe
+} from 'lucide-react';
+
+// --- DICCIONARIO DE TRADUCCIONES (ES / EN) ---
+const translations = {
+  es: {
+    nav: { 
+      intro: "Introducción", 
+      consult: "Consultar Documentos", 
+      load: "Cargar Documento", 
+      edit: "Editar y Actualizar", 
+      notif: "Notificaciones" 
+    },
+    header: { 
+      office: "Oficina de Procesos", 
+      doc: "Documentación V1.0", 
+      hello: "Hola" 
+    },
+    carousel: { 
+      viewer: "Visualizador Interactivo" 
+    },
+    inicio: {
+      title: "Bienvenido a DCS AI",
+      subtitle: "Document Control System - Oficina de Procesos TP MR",
+      cardTitle: "Tu nuevo centro de control documental",
+      cardDesc: "Hemos rediseñado por completo la forma en que consultas, cargas y gestionas los informes y documentos de Internal AI, Shared Services, Ratios y SG&A. Todo centralizado, rápido y seguro.",
+      btn: "Aprender a Consultar",
+      screenTitle: "Pantalla de Inicio"
+    },
+    consultar: {
+      title: "Consultar Documentos",
+      subtitle: "Encuentra reportes rápidamente usando la jerarquía regional.",
+      tipTitle: "Tip de Rendimiento",
+      tipDesc: "Para evitar que tu aplicación se congele, la tabla principal está programada para mostrar un máximo de 50 registros a la vez de forma descendente. ¡Usa los filtros para encontrar archivos más antiguos!",
+      steps: [
+        { 
+          t: "Barra de Filtros Inteligentes", 
+          d: "En la parte superior encontrarás filtros en cascada. Al seleccionar un 'Workstream' (Ej. Shared Services), el campo 'Stream' mostrará únicamente las opciones relevantes." 
+        },
+        { 
+          t: "Búsqueda por Palabra Clave o ID", 
+          d: "Puedes escribir el nombre del documento o directamente su ID numérico. La tabla inferior se actualizará en tiempo real mostrando hasta los 50 registros más relevantes para garantizar la máxima velocidad." 
+        },
+        { 
+          t: "Limpiar Filtros", 
+          d: "Si deseas volver a ver todos los documentos de SharePoint, simplemente haz clic en el ícono circular de recarga ubicado a la derecha de los filtros. Esto dejará todas las casillas en blanco." 
+        }
+      ]
+    },
+    cargar: {
+      title: "Cargar Nuevo Documento",
+      subtitle: "Guarda un nuevo registro en SharePoint y notifica al equipo.",
+      steps: [
+        { 
+          t: "Selección de Metadatos", 
+          d: "Completa la información obligatoria. Recuerda la jerarquía: Primero selecciona la Región (Ej. [Americas] LATAM) para que se habiliten los Países correspondientes." 
+        },
+        { 
+          t: "Asignar Destinatarios (Revisores)", 
+          d: "Busca a los revisores usando su nombre o correo corporativo. Puedes agregar a múltiples personas. Ellos recibirán una notificación automática por Teams y Outlook." 
+        },
+        { 
+          t: "Adjuntar un Único Archivo", 
+          d: "La zona de carga está restringida a 1 solo archivo por registro para mantener el orden. Si intentas subir un segundo archivo, el sistema reemplazará el anterior automáticamente." 
+        }
+      ]
+    },
+    editar: {
+      title: "Editar y Actualizar",
+      subtitle: "Modifica registros existentes sin borrar su historial.",
+      steps: [
+        { 
+          t: "Selección en la Tabla", 
+          d: "Haz clic sobre cualquier fila en la pantalla de 'Consultar Documentos'. Asegúrate de hacer clic sobre el texto para que el sistema reconozca el ID del documento. Luego, haz clic en el ícono de lápiz que se iluminará arriba." 
+        },
+        { 
+          t: "Panel de Edición", 
+          d: "Se abrirá una ventana emergente. Los campos en blanco significan que mantendrán la información original. Si deseas cambiar algo (Ej. el nombre o la descripción), simplemente escríbelo." 
+        },
+        { 
+          t: "Cargar Nueva Versión", 
+          d: "Si adjuntas un nuevo archivo en el panel de edición, este reemplazará al archivo anterior en SharePoint y la versión del documento subirá automáticamente. Si no adjuntas nada, se conservará el documento original." 
+        }
+      ]
+    },
+    notif: {
+      title: "Flujo de Notificaciones",
+      subtitle: "¿Qué pasa después de hacer clic en 'Cargar Documento'?",
+      teamsTitle: "Tarjeta Adaptable en Teams",
+      teamsDesc: "Cada destinatario seleccionado recibirá un mensaje individual a través de Power Automate (Flow Bot). La tarjeta muestra los metadatos clave y contiene botones directos para:",
+      teamsL1: "Abrir el documento web",
+      teamsL2: "Ir directamente al aplicativo",
+      mailTitle: "Correo Electrónico V2",
+      mailDesc: "Paralelamente, se envía un correo electrónico global (con copia a todos los revisores) que contiene la plantilla corporativa en HTML.",
+      mailL1: "Archivo adjunto físicamente en el correo",
+      mailL2: "Prevención de errores con el punto y coma final"
+    }
+  },
+  en: {
+    nav: { 
+      intro: "Introduction", 
+      consult: "Consult Documents", 
+      load: "Upload Document", 
+      edit: "Edit & Update", 
+      notif: "Notifications" 
+    },
+    header: { 
+      office: "Process Office", 
+      doc: "Documentation V1.0", 
+      hello: "Hello" 
+    },
+    carousel: { 
+      viewer: "Interactive Viewer" 
+    },
+    inicio: {
+      title: "Welcome to DCS AI",
+      subtitle: "Document Control System - TP MR Process Office",
+      cardTitle: "Your new document control center",
+      cardDesc: "We have completely redesigned how you consult, upload, and manage reports and documents for Internal AI, Shared Services, Ratios, and SG&A. Everything centralized, fast, and secure.",
+      btn: "Learn to Consult",
+      screenTitle: "Home Screen"
+    },
+    consultar: {
+      title: "Consult Documents",
+      subtitle: "Find reports quickly using the regional hierarchy.",
+      tipTitle: "Performance Tip",
+      tipDesc: "To prevent your application from freezing, the main table is programmed to display a maximum of 50 records at a time in descending order. Use the filters to find older files!",
+      steps: [
+        { 
+          t: "Smart Filter Bar", 
+          d: "At the top you will find cascading filters. By selecting a 'Workstream' (e.g., Shared Services), the 'Stream' field will only show relevant options." 
+        },
+        { 
+          t: "Search by Keyword or ID", 
+          d: "You can type the document name or directly its numerical ID. The table below will update in real-time showing up to the top 50 relevant records to guarantee maximum speed." 
+        },
+        { 
+          t: "Clear Filters", 
+          d: "If you want to see all SharePoint documents again, simply click on the circular reload icon located to the right of the filters. This will clear all boxes." 
+        }
+      ]
+    },
+    cargar: {
+      title: "Upload New Document",
+      subtitle: "Save a new record in SharePoint and notify the team.",
+      steps: [
+        { 
+          t: "Metadata Selection", 
+          d: "Complete the mandatory information. Remember the hierarchy: First select the Region (e.g., [Americas] LATAM) to enable the corresponding Countries." 
+        },
+        { 
+          t: "Assign Recipients (Reviewers)", 
+          d: "Search for reviewers using their name or corporate email. You can add multiple people. They will receive an automatic notification via Teams and Outlook." 
+        },
+        { 
+          t: "Attach a Single File", 
+          d: "The upload zone is restricted to 1 file per record to maintain order. If you try to upload a second file, the system will automatically replace the previous one." 
+        }
+      ]
+    },
+    editar: {
+      title: "Edit and Update",
+      subtitle: "Modify existing records without deleting their history.",
+      steps: [
+        { 
+          t: "Selection in the Table", 
+          d: "Click on any row in the 'Consult Documents' screen. Make sure to click on the text so the system recognizes the document ID. Then, click on the pencil icon that will light up above." 
+        },
+        { 
+          t: "Editing Panel", 
+          d: "A pop-up window will open. Blank fields mean they will keep the original information. If you want to change something (e.g., name or description), simply type it." 
+        },
+        { 
+          t: "Upload New Version", 
+          d: "If you attach a new file in the editing panel, it will replace the previous file in SharePoint and the document version will automatically increase. If you don't attach anything, the original document is kept." 
+        }
+      ]
+    },
+    notif: {
+      title: "Notification Flow",
+      subtitle: "What happens after clicking 'Upload Document'?",
+      teamsTitle: "Adaptive Card in Teams",
+      teamsDesc: "Each selected recipient will receive an individual message through Power Automate (Flow Bot). The card displays key metadata and contains direct buttons to:",
+      teamsL1: "Open the web document",
+      teamsL2: "Go directly to the application",
+      mailTitle: "Email V2",
+      mailDesc: "At the same time, a global email is sent (copied to all reviewers) containing the corporate HTML template.",
+      mailL1: "File physically attached to the email",
+      mailL2: "Error prevention with the final semicolon"
+    }
+  }
+};
+
+export default function App() {
+  const [activeSection, setActiveSection] = useState('inicio');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [lang, setLang] = useState('es'); // Estado para el idioma actual
+
+  const t = translations[lang]; // Diccionario activo
+
+  // Datos del menú de navegación (Dependen del idioma)
+  const navItems = [
+    { id: 'inicio', label: t.nav.intro, icon: <LayoutDashboard size={18} /> },
+    { id: 'consultar', label: t.nav.consult, icon: <Search size={18} /> },
+    { id: 'cargar', label: t.nav.load, icon: <UploadCloud size={18} /> },
+    { id: 'editar', label: t.nav.edit, icon: <Edit3 size={18} /> },
+    { id: 'notificaciones', label: t.nav.notif, icon: <Bell size={18} /> },
+  ];
+
+  // Componente: Carrusel Interactivo de Pasos
+  const StepCarousel = ({ steps }) => {
+    const [currentStep, setCurrentStep] = useState(0);
+
+    const nextStep = () => setCurrentStep((prev) => (prev + 1) % steps.length);
+    const prevStep = () => setCurrentStep((prev) => (prev - 1 + steps.length) % steps.length);
+
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+        <div className="p-1 bg-slate-100 flex justify-between items-center border-b border-slate-200">
+          <div className="flex gap-1 ml-2">
+            <div className="w-3 h-3 rounded-full bg-red-400"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+            <div className="w-3 h-3 rounded-full bg-green-400"></div>
+          </div>
+          <span className="text-xs font-medium text-slate-500 mr-4">{t.carousel.viewer}</span>
+        </div>
+        
+        <div className="flex flex-col md:flex-row min-h-[400px]">
+          {/* Imagen / Visual */}
+          <div className="md:w-3/5 bg-slate-50 p-6 flex items-center justify-center relative border-r border-slate-100">
+             <div className="w-full h-full min-h-[250px] bg-white rounded-lg shadow-md border border-slate-200 flex items-center justify-center overflow-hidden">
+                {steps[currentStep].image}
+             </div>
+             
+             {/* Controles del Carrusel */}
+             <button onClick={prevStep} className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full shadow-md flex items-center justify-center text-[#5e4b8a] hover:bg-[#5e4b8a] hover:text-white transition-colors">
+               <ChevronLeft size={24} />
+             </button>
+             <button onClick={nextStep} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full shadow-md flex items-center justify-center text-[#5e4b8a] hover:bg-[#5e4b8a] hover:text-white transition-colors">
+               <ChevronRight size={24} />
+             </button>
+          </div>
+
+          {/* Texto Descriptivo */}
+          <div className="md:w-2/5 p-8 flex flex-col justify-center bg-white">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#5e4b8a]/10 text-[#5e4b8a] font-bold mb-4">
+              {currentStep + 1}
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-3">{steps[currentStep].t}</h3>
+            <p className="text-slate-600 leading-relaxed text-sm">
+              {steps[currentStep].d}
+            </p>
+            
+            {/* Indicadores de progreso */}
+            <div className="flex gap-2 mt-8">
+              {steps.map((_, idx) => (
+                <button 
+                  key={idx}
+                  onClick={() => setCurrentStep(idx)}
+                  className={`h-2 rounded-full transition-all duration-300 ${idx === currentStep ? 'w-8 bg-[#5e4b8a]' : 'w-2 bg-slate-200 hover:bg-slate-300'}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // --- SECCIONES DE CONTENIDO ---
+
+  const SectionInicio = () => (
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-[#3b3e56] mb-2">{t.inicio.title}</h1>
+        <p className="text-slate-500 text-lg">{t.inicio.subtitle}</p>
+      </div>
+
+      <div className="bg-gradient-to-r from-[#5e4b8a] to-[#3b3e56] rounded-2xl p-8 text-white shadow-lg mb-8 relative overflow-hidden">
+        <div className="relative z-10 max-w-2xl">
+          <h2 className="text-2xl font-bold mb-4">{t.inicio.cardTitle}</h2>
+          <p className="text-white/80 leading-relaxed mb-6">
+            {t.inicio.cardDesc}
+          </p>
+          <div className="flex gap-4">
+            <button onClick={() => setActiveSection('consultar')} className="px-5 py-2.5 bg-white text-[#5e4b8a] font-semibold rounded-lg hover:bg-slate-50 transition flex items-center gap-2">
+              {t.inicio.btn} <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+        <BookOpen className="absolute -right-10 -bottom-10 w-64 h-64 text-white opacity-10" />
+      </div>
+
+      <h3 className="text-xl font-bold text-slate-800 mb-4">{t.inicio.screenTitle}</h3>
+      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-8 flex items-center justify-center">
+        <div className="max-w-3xl w-full text-center text-slate-400 font-medium py-12 border-2 border-dashed border-slate-300 rounded-lg bg-white">
+          
+        </div>
+      </div>
+    </div>
+  );
+
+  const SectionConsultar = () => {
+    const steps = [
+      {
+        t: t.consultar.steps[0].t,
+        d: t.consultar.steps[0].d,
+        image: <div className="text-slate-400"></div>
+      },
+      {
+        t: t.consultar.steps[1].t,
+        d: t.consultar.steps[1].d,
+        image: <div className="text-slate-400"></div>
+      },
+      {
+        t: t.consultar.steps[2].t,
+        d: t.consultar.steps[2].d,
+        image: <div className="text-slate-400 text-center"><Search className="w-16 h-16 mx-auto mb-2 text-[#5e4b8a]" /><br/></div>
+      }
+    ];
+
+    return (
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mb-8 flex items-center gap-3">
+          <div className="p-3 bg-[#5e4b8a]/10 text-[#5e4b8a] rounded-lg"><Search size={24} /></div>
+          <div>
+            <h1 className="text-3xl font-bold text-[#3b3e56]">{t.consultar.title}</h1>
+            <p className="text-slate-500">{t.consultar.subtitle}</p>
+          </div>
+        </div>
+
+        <StepCarousel steps={steps} />
+
+        <div className="bg-blue-50 border-l-4 border-[#0078d4] p-5 rounded-r-lg">
+          <div className="flex gap-3">
+            <Info className="text-[#0078d4] shrink-0" />
+            <div>
+              <h4 className="font-bold text-slate-800 mb-1">{t.consultar.tipTitle}</h4>
+              <p className="text-sm text-slate-600">{t.consultar.tipDesc}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const SectionCargar = () => {
+    const steps = [
+      {
+        t: t.cargar.steps[0].t,
+        d: t.cargar.steps[0].d,
+        image: <div className="text-slate-400"></div>
+      },
+      {
+        t: t.cargar.steps[1].t,
+        d: t.cargar.steps[1].d,
+        image: <div className="text-slate-400"></div>
+      },
+      {
+        t: t.cargar.steps[2].t,
+        d: t.cargar.steps[2].d,
+        image: <div className="text-slate-400"></div>
+      }
+    ];
+
+    return (
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mb-8 flex items-center gap-3">
+          <div className="p-3 bg-[#5e4b8a]/10 text-[#5e4b8a] rounded-lg"><UploadCloud size={24} /></div>
+          <div>
+            <h1 className="text-3xl font-bold text-[#3b3e56]">{t.cargar.title}</h1>
+            <p className="text-slate-500">{t.cargar.subtitle}</p>
+          </div>
+        </div>
+
+        <StepCarousel steps={steps} />
+      </div>
+    );
+  };
+
+  const SectionEditar = () => {
+    const steps = [
+      {
+        t: t.editar.steps[0].t,
+        d: t.editar.steps[0].d,
+        image: <div className="text-slate-400"></div>
+      },
+      {
+        t: t.editar.steps[1].t,
+        d: t.editar.steps[1].d,
+        image: <div className="text-slate-400"></div>
+      },
+      {
+        t: t.editar.steps[2].t,
+        d: t.editar.steps[2].d,
+        image: <div className="text-slate-400 text-center"><Shield className="w-16 h-16 mx-auto mb-2 text-green-600" /><br/></div>
+      }
+    ];
+
+    return (
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mb-8 flex items-center gap-3">
+          <div className="p-3 bg-[#5e4b8a]/10 text-[#5e4b8a] rounded-lg"><Edit3 size={24} /></div>
+          <div>
+            <h1 className="text-3xl font-bold text-[#3b3e56]">{t.editar.title}</h1>
+            <p className="text-slate-500">{t.editar.subtitle}</p>
+          </div>
+        </div>
+
+        <StepCarousel steps={steps} />
+      </div>
+    );
+  };
+
+  const SectionNotificaciones = () => (
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="mb-8 flex items-center gap-3">
+        <div className="p-3 bg-[#5e4b8a]/10 text-[#5e4b8a] rounded-lg"><Bell size={24} /></div>
+        <div>
+          <h1 className="text-3xl font-bold text-[#3b3e56]">{t.notif.title}</h1>
+          <p className="text-slate-500">{t.notif.subtitle}</p>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Teams Card */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div className="w-12 h-12 bg-[#5e4b8a]/10 rounded-full flex items-center justify-center text-[#5e4b8a] mb-4">
+            <LayoutDashboard size={24} />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">{t.notif.teamsTitle}</h3>
+          <p className="text-slate-600 text-sm leading-relaxed mb-4">
+            {t.notif.teamsDesc}
+          </p>
+          <ul className="space-y-2 mb-4 text-sm text-slate-600">
+            <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> {t.notif.teamsL1}</li>
+            <li className="flex items-center gap-2"><CheckCircle size={16} className="text-green-500" /> {t.notif.teamsL2}</li>
+          </ul>
+          <div className="p-3 bg-slate-50 rounded text-xs text-center border border-slate-100 font-mono text-slate-400">
+             
+          </div>
+        </div>
+
+        {/* Outlook Card */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div className="w-12 h-12 bg-[#0078d4]/10 rounded-full flex items-center justify-center text-[#0078d4] mb-4">
+            <UploadCloud size={24} />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">{t.notif.mailTitle}</h3>
+          <p className="text-slate-600 text-sm leading-relaxed mb-4">
+            {t.notif.mailDesc}
+          </p>
+          <ul className="space-y-2 mb-4 text-sm text-slate-600">
+            <li className="flex items-center gap-2"><CheckCircle size={16} className="text-blue-500" /> {t.notif.mailL1}</li>
+            <li className="flex items-center gap-2"><CheckCircle size={16} className="text-blue-500" /> {t.notif.mailL2}</li>
+          </ul>
+          <div className="p-3 bg-slate-50 rounded text-xs text-center border border-slate-100 font-mono text-slate-400">
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex h-screen bg-[#f8fafc] font-sans">
+      
+      {/* SIDEBAR NAVEGACIÓN */}
+      <aside className={`bg-white border-r border-slate-200 transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-20'} flex flex-col z-20`}>
+        {/* Logo Area */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100 shrink-0">
+          {isSidebarOpen ? (
+            <div className="flex items-center gap-2 text-[#5e4b8a] font-bold text-lg">
+               <Shield size={24} />
+               <span>Manual AI DCS</span>
+            </div>
+          ) : (
+            <Shield size={24} className="text-[#5e4b8a] mx-auto" />
+          )}
+        </div>
+
+        {/* Menu Items */}
+        <div className="flex-1 py-6 px-3 overflow-y-auto space-y-1">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveSection(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                activeSection === item.id 
+                  ? 'bg-[#5e4b8a] text-white font-medium shadow-md' 
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-[#5e4b8a]'
+              }`}
+            >
+              <div className="shrink-0">{item.icon}</div>
+              {isSidebarOpen && <span className="text-sm truncate">{item.label}</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* Footer Sidebar */}
+        <div className="p-4 border-t border-slate-100 text-center">
+           {isSidebarOpen ? (
+             <div className="text-[10px] text-slate-400 font-medium">
+               TP.ai FAB Operate™<br/>{t.header.office} MR
+             </div>
+           ) : (
+             <div className="text-[10px] text-slate-400 font-bold">TP</div>
+           )}
+        </div>
+      </aside>
+
+      {/* ÁREA DE CONTENIDO PRINCIPAL */}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        {/* TOPBAR (Header pequeño) */}
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
+          <button 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 text-slate-400 hover:text-[#5e4b8a] hover:bg-slate-50 rounded-lg transition"
+          >
+            <LayoutDashboard size={20} />
+          </button>
+          
+          <div className="flex items-center gap-4">
+             <span className="text-sm font-medium text-slate-600 hidden sm:block">{t.header.doc}</span>
+             
+             {/* BOTÓN SELECTOR DE IDIOMA */}
+             <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+               <Globe size={14} className="text-slate-400 mx-2" />
+               <button 
+                 onClick={() => setLang('es')}
+                 className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${lang === 'es' ? 'bg-[#5e4b8a] text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+               >
+                 ES
+               </button>
+               <button 
+                 onClick={() => setLang('en')}
+                 className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${lang === 'en' ? 'bg-[#5e4b8a] text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+               >
+                 EN
+               </button>
+             </div>
+
+             <div className="w-8 h-8 bg-blue-100 text-[#0078d4] rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm ml-2" title={`${t.header.hello}, AG`}>
+               AG
+             </div>
+          </div>
+        </header>
+
+        {/* CONTENIDO SCROLL */}
+        <div className="flex-1 overflow-y-auto p-8 lg:p-12">
+          <div className="max-w-5xl mx-auto">
+            {activeSection === 'inicio' && <SectionInicio />}
+            {activeSection === 'consultar' && <SectionConsultar />}
+            {activeSection === 'cargar' && <SectionCargar />}
+            {activeSection === 'editar' && <SectionEditar />}
+            {activeSection === 'notificaciones' && <SectionNotificaciones />}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
